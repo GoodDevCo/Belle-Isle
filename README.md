@@ -1,6 +1,8 @@
-# Belle Isle Government Tracker
+# GovAgenda
 
-A self-owned, version-controlled historical record of City of Belle Isle, FL local government.
+A self-owned, version-controlled historical record of local government — agendas, meeting
+events, and the remarks officials made on the record. **First city: Belle Isle, FL** (the
+platform is built to expand to other municipalities).
 Each **topic** (the FY27 budget, an ordinance, Flock cameras, etc.) is a thread with a
 chronological timeline of meeting events and the commissioner remarks recorded in the minutes.
 

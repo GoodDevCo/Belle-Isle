@@ -1,7 +1,8 @@
-# Belle Isle Government Tracker — Roadmap
+# GovAgenda — Roadmap
 
-A public record of what's planned and what's shipped for the tracker.
-**Live site:** https://gooddevco.github.io/Belle-Isle/
+A public record of what's planned and what's shipped for GovAgenda — local government agendas
+and meeting records, in plain view. **First city: Belle Isle, FL.**
+**Live site:** https://gooddevco.github.io/GovAgenda/
 
 ## Planned
 
@@ -12,6 +13,7 @@ A public record of what's planned and what's shipped for the tracker.
   same codebase: a per-municipality data layer, a simple intake for where each place publishes
   its agendas/minutes and its access points, per-city pages, and a directory landing page.
 - **Update tooling** — streamline the process of creating and publishing updates.
+- **Custom domain (GovAgenda.org)** — point the owned domain at the site.
 
 ## Recently shipped
 
