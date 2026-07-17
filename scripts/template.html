@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belle Isle Government Tracker</title>
+<style>
+  :root{
+    --ink:#12241f; --muted:#5c6b66; --line:#e2e8e4; --bg:#f6f8f6; --card:#ffffff;
+    --teal:#0f6e5c; --teal-soft:#e4f1ee; --amber:#b06a12; --amber-soft:#fbeede;
+    --slate:#3b5568; --slate-soft:#e7eef3; --gold:#d99b1c; --gold-soft:#fffaf0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:780px; margin:0 auto; padding:32px 20px 60px;}
+  header.top{border-bottom:2px solid var(--teal); padding-bottom:16px;}
+  .eyebrow{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  h1{font-size:28px; line-height:1.15; margin:6px 0 4px;}
+  .sub{color:var(--muted); font-size:14px; margin:0;}
+
+  .tabs{display:flex; gap:6px; margin:18px 0 8px;}
+  .tab{border:1px solid var(--line); background:#fff; border-radius:9px; padding:8px 15px; font-size:14px; font-weight:650; color:var(--slate); cursor:pointer;}
+  .tab.active{background:var(--teal); color:#fff; border-color:var(--teal);}
+  .toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0 4px;}
+  .toolbar input, .toolbar select{font-size:14px; border:1px solid var(--line); border-radius:8px; padding:8px 11px; background:#fff; color:var(--ink);}
+  .toolbar input{flex:1 1 200px;}
+  .hint{font-size:12px; color:var(--muted); margin:2px 2px 16px;}
+
+  .topic{background:var(--card); border:1px solid var(--line); border-radius:13px; margin-bottom:12px; overflow:hidden; transition:border-color .15s, box-shadow .15s;}
+  .topic.pinned{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset;}
+  .thead{display:flex; align-items:flex-start; gap:12px; padding:15px 17px; cursor:pointer;}
+  .thead:hover{background:#fbfdfc;}
+  .tmain{flex:1 1 auto; min-width:0;}
+  .trow1{display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
+  .ttitle{font-weight:700; font-size:16px; margin:0;}
+  .cat{font-size:11px; font-weight:700; color:var(--slate); background:var(--slate-soft); border-radius:5px; padding:2px 7px;}
+  .status{font-size:11px; font-weight:700; border-radius:5px; padding:2px 8px; text-transform:uppercase; letter-spacing:.03em;}
+  .s-teal{background:var(--teal-soft); color:var(--teal);}
+  .s-amber{background:var(--amber-soft); color:var(--amber);}
+  .s-slate{background:var(--slate-soft); color:var(--slate);}
+  .tsummary{color:var(--muted); font-size:13.5px; margin:6px 0 0;}
+  .tmeta{font-size:12px; color:var(--muted); margin-top:7px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+  .tmeta .count{font-weight:600; color:var(--slate);}
+  .pinbtn{flex:0 0 auto; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer; font-size:14px; color:var(--muted); padding:6px 9px; display:inline-flex; align-items:center; gap:5px;}
+  .pinbtn:hover{border-color:var(--gold); color:var(--ink);}
+  .topic.pinned .pinbtn{background:var(--gold-soft); border-color:var(--gold); color:var(--amber);}
+  .chev{flex:0 0 auto; color:var(--muted); font-size:13px; margin-top:3px; transition:transform .15s;}
+  .topic.open .chev{transform:rotate(90deg);}
+
+  .tbody{display:none; padding:0 17px 6px; border-top:1px solid var(--line);}
+  .topic.open .tbody{display:block;}
+  .tl{position:relative; margin:14px 0 6px; padding-left:20px;}
+  .tl:before{content:""; position:absolute; left:5px; top:4px; bottom:4px; width:2px; background:var(--line);}
+  .ev{position:relative; padding:0 0 16px;}
+  .ev:before{content:""; position:absolute; left:-18px; top:4px; width:10px; height:10px; border-radius:50%; background:#fff; border:2px solid var(--teal);}
+  .ev.future:before{border-color:var(--muted); background:var(--bg);}
+  .evdate{font-size:12px; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.04em;}
+  .ev.future .evdate{color:var(--muted);}
+  .evhead{font-weight:650; font-size:14.5px; margin:1px 0 2px;}
+  .evmeeting{font-size:12px; color:var(--muted); font-weight:600;}
+  .evdetail{font-size:13.5px; color:#2c3a35; margin:5px 0 0;}
+  .remarks{margin:9px 0 0; border-left:2px solid var(--teal-soft); padding-left:11px;}
+  .remark{font-size:13px; margin:0 0 7px;}
+  .remark .who{font-weight:700; color:var(--teal);}
+  .remark .role{font-size:11px; color:var(--muted); font-weight:600;}
+  .remark .text{color:#2c3a35;}
+  .evlinks{margin-top:7px; display:flex; gap:13px; flex-wrap:wrap;}
+  a{color:var(--teal); text-decoration:none; border-bottom:1px solid rgba(15,110,92,.3); font-size:13px; font-weight:600;}
+  a:hover{border-bottom-color:var(--teal);}
+
+  .emptynote{font-size:13px; color:var(--muted); padding:16px; text-align:center; background:#fff; border:1px dashed var(--line); border-radius:12px;}
+
+  /* Week view */
+  .weekcard{background:var(--card); border:1px solid var(--line); border-radius:13px; padding:17px; margin-bottom:14px;}
+  .weeklabel{font-weight:700; font-size:17px; margin:0 0 3px;}
+  .weekcompiled{font-size:12px; color:var(--muted);}
+  .weekintro{font-size:14px; color:#2c3a35; margin:11px 0 14px;}
+  .hl{display:flex; gap:10px; padding:10px 0; border-top:1px solid var(--line); cursor:pointer;}
+  .hl:hover{background:#fbfdfc;}
+  .hl .arrow{color:var(--teal); font-weight:700;}
+  .hl .txt{font-size:13.5px;}
+  .hl .txt small{display:block; color:var(--muted); font-size:11.5px; margin-top:1px;}
+
+  footer.foot{margin-top:30px; padding-top:16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--muted);}
+  .pill-legend{display:inline-block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">City of Belle Isle, FL &middot; Government Tracker</div>
+    <h1>Belle Isle Government Tracker</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" id="tabTopics">Topics</button>
+    <button class="tab" id="tabWeek">This week</button>
+  </div>
+
+  <!-- TOPICS VIEW -->
+  <div id="viewTopics">
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="Search topics (budget, ordinance, Flock, stormwater…)">
+      <select id="catFilter"><option value="">All categories</option></select>
+    </div>
+    <p class="hint">Tap a topic to open its full history and what commissioners said. Tap the ☆ to pin a topic to the top.</p>
+    <div id="topicList"></div>
+  </div>
+
+  <!-- WEEK VIEW -->
+  <div id="viewWeek" style="display:none;">
+    <div id="weekWrap"></div>
+  </div>
+
+  <footer class="foot">
+    <span id="footdate"></span> Commissioner remarks are summarized or quoted from official City of Belle Isle meeting minutes &mdash; open the linked source for exact wording and context. "→" links open the source PDF at the relevant page in Chrome/Edge. Ordinances require two readings; only items marked "Adopted" are law. Questions: City Clerk, cityclerk@belleislefl.gov, 407-851-7730.
+  </footer>
+
+</div>
+
+<script id="archive-data" type="application/json">__ARCHIVE_JSON__</script>
+
+<script>
+(function(){
+  var DATA = JSON.parse(document.getElementById('archive-data').textContent);
+  var topics = DATA.topics.slice();
+  var weeks = (DATA.weeks || []).slice().sort(function(a,b){ return a.weekOf < b.weekOf ? 1 : -1; });
+  var pins = {}; // in-memory pin state, keyed by topic id
+  var open = {}; // open/expanded topics
+  var TODAY = "2026-07-16";
+
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ s = String(s==null?'':s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  // allow our own <br> in labels but escape everything else: we control data, so render detail as text
+  function txt(s){ return esc(s); }
+
+  $('sub').textContent = topics.length + ' tracked topics · ' + (DATA.meta ? DATA.meta.jurisdiction : '');
+  $('footdate').textContent = 'As of ' + (DATA.meta ? DATA.meta.lastUpdated : TODAY) + '. ';
+
+  // category filter options
+  var cats = [];
+  topics.forEach(function(t){ if(cats.indexOf(t.category)===-1) cats.push(t.category); });
+  cats.sort().forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; $('catFilter').appendChild(o); });
+
+  function isPinned(t){ return pins[t.id] != null ? pins[t.id] : !!t.pinned; }
+
+  function sortTopics(list){
+    return list.slice().sort(function(a,b){
+      var pa = isPinned(a) ? 1 : 0, pb = isPinned(b) ? 1 : 0;
+      if(pa !== pb) return pb - pa;                 // pinned first
+      return (a.updated < b.updated) ? 1 : (a.updated > b.updated ? -1 : 0); // newest updated
+    });
+  }
+
+  function remarksHtml(remarks){
+    if(!remarks || !remarks.length) return '';
+    return '<div class="remarks">' + remarks.map(function(r){
+      return '<p class="remark"><span class="who">' + txt(r.who) + '</span> '
+        + (r.role ? '<span class="role">(' + txt(r.role) + ')</span> ' : '')
+        + '<span class="text">— ' + txt(r.text) + '</span></p>';
+    }).join('') + '</div>';
+  }
+  function linksHtml(links){
+    if(!links || !links.length) return '';
+    return '<div class="evlinks">' + links.map(function(l){
+      return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + txt(l.label) + '</a>';
+    }).join('') + '</div>';
+  }
+  function timelineHtml(t){
+    var evs = t.timeline.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }); // newest first
+    return '<div class="tl">' + evs.map(function(e){
+      var future = e.date > TODAY ? ' future' : '';
+      return '<div class="ev' + future + '">'
+        + '<div class="evdate">' + txt(e.dateLabel) + (future ? ' · upcoming' : '') + '</div>'
+        + '<div class="evhead">' + txt(e.event) + '</div>'
+        + '<div class="evmeeting">' + txt(e.meeting) + '</div>'
+        + (e.detail ? '<p class="evdetail">' + txt(e.detail) + '</p>' : '')
+        + remarksHtml(e.remarks)
+        + linksHtml(e.links)
+        + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function topicCard(t){
+    var pinned = isPinned(t);
+    var isOpen = !!open[t.id];
+    var n = t.timeline ? t.timeline.length : 0;
+    return '<div class="topic' + (pinned?' pinned':'') + (isOpen?' open':'') + '" data-id="' + esc(t.id) + '">'
+      + '<div class="thead" data-role="head">'
+        + '<button class="pinbtn" data-role="pin" title="Pin to top">' + (pinned ? '★' : '☆') + '</button>'
+        + '<div class="tmain">'
+          + '<div class="trow1"><p class="ttitle">' + txt(t.title) + '</p>'
+            + '<span class="status ' + esc(t.statusClass) + '">' + txt(t.status) + '</span>'
+            + '<span class="cat">' + txt(t.category) + '</span></div>'
+          + '<p class="tsummary">' + txt(t.summary) + '</p>'
+          + '<div class="tmeta"><span class="count">' + n + ' update' + (n===1?'':'s') + '</span>'
+            + '<span>last activity ' + txt(t.updated) + '</span></div>'
+        + '</div>'
+        + '<span class="chev">▶</span>'
+      + '</div>'
+      + '<div class="tbody">' + (isOpen ? timelineHtml(t) : '') + '</div>'
+    + '</div>';
+  }
+
+  function renderTopics(){
+    var q = ($('search').value || '').toLowerCase().trim();
+    var cat = $('catFilter').value;
+    var list = topics.filter(function(t){
+      if(cat && t.category !== cat) return false;
+      if(!q) return true;
+      var hay = (t.title + ' ' + t.summary + ' ' + t.category + ' ' + JSON.stringify(t.timeline)).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+    list = sortTopics(list);
+    var host = $('topicList');
+    if(!list.length){ host.innerHTML = '<div class="emptynote">No topics match your search.</div>'; return; }
+    host.innerHTML = list.map(topicCard).join('');
+    // wire events
+    host.querySelectorAll('.topic').forEach(function(el){
+      var id = el.getAttribute('data-id');
+      el.querySelector('[data-role="pin"]').addEventListener('click', function(ev){
+        ev.stopPropagation();
+        pins[id] = !isPinnedById(id);
+        renderTopics();
+      });
+      el.querySelector('[data-role="head"]').addEventListener('click', function(){
+        open[id] = !open[id];
+        renderTopics();
+      });
+    });
+  }
+  function isPinnedById(id){ var t = topics.filter(function(x){return x.id===id;})[0]; return t ? isPinned(t) : false; }
+
+  // Week view
+  function renderWeek(){
+    var host = $('weekWrap');
+    if(!weeks.length){ host.innerHTML = '<div class="emptynote">No weekly summaries yet.</div>'; return; }
+    host.innerHTML = weeks.map(function(w){
+      var hls = (w.highlights||[]).map(function(h){
+        var t = topics.filter(function(x){return x.id===h.topicId;})[0];
+        var sub = t ? (t.title + ' · ' + t.status) : '';
+        return '<div class="hl" data-topic="' + esc(h.topicId) + '"><span class="arrow">→</span><div class="txt">' + txt(h.line) + (sub ? '<small>' + txt(sub) + '</small>' : '') + '</div></div>';
+      }).join('');
+      return '<div class="weekcard"><p class="weeklabel">' + txt(w.label) + '</p>'
+        + '<span class="weekcompiled">compiled ' + txt(w.compiled) + '</span>'
+        + '<p class="weekintro">' + txt(w.intro) + '</p>' + hls + '</div>';
+    }).join('');
+    host.querySelectorAll('.hl').forEach(function(el){
+      el.addEventListener('click', function(){
+        var id = el.getAttribute('data-topic');
+        open[id] = true;
+        showTab('topics');
+        $('search').value=''; $('catFilter').value='';
+        renderTopics();
+        var card = document.querySelector('.topic[data-id="' + id + '"]');
+        if(card) card.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  }
+
+  function showTab(which){
+    var t1 = which==='topics';
+    $('viewTopics').style.display = t1 ? 'block':'none';
+    $('viewWeek').style.display = t1 ? 'none':'block';
+    $('tabTopics').classList.toggle('active', t1);
+    $('tabWeek').classList.toggle('active', !t1);
+  }
+  $('tabTopics').addEventListener('click', function(){ showTab('topics'); });
+  $('tabWeek').addEventListener('click', function(){ showTab('week'); });
+  $('search').addEventListener('input', renderTopics);
+  $('catFilter').addEventListener('change', renderTopics);
+
+  renderTopics();
+  renderWeek();
+})();
+</script>
+</body>
+</html>

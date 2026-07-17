@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belle Isle Government Tracker</title>
+<style>
+  :root{
+    --ink:#12241f; --muted:#5c6b66; --line:#e2e8e4; --bg:#f6f8f6; --card:#ffffff;
+    --teal:#0f6e5c; --teal-soft:#e4f1ee; --amber:#b06a12; --amber-soft:#fbeede;
+    --slate:#3b5568; --slate-soft:#e7eef3; --gold:#d99b1c; --gold-soft:#fffaf0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:780px; margin:0 auto; padding:32px 20px 60px;}
+  header.top{border-bottom:2px solid var(--teal); padding-bottom:16px;}
+  .eyebrow{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  h1{font-size:28px; line-height:1.15; margin:6px 0 4px;}
+  .sub{color:var(--muted); font-size:14px; margin:0;}
+
+  .tabs{display:flex; gap:6px; margin:18px 0 8px;}
+  .tab{border:1px solid var(--line); background:#fff; border-radius:9px; padding:8px 15px; font-size:14px; font-weight:650; color:var(--slate); cursor:pointer;}
+  .tab.active{background:var(--teal); color:#fff; border-color:var(--teal);}
+  .toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0 4px;}
+  .toolbar input, .toolbar select{font-size:14px; border:1px solid var(--line); border-radius:8px; padding:8px 11px; background:#fff; color:var(--ink);}
+  .toolbar input{flex:1 1 200px;}
+  .hint{font-size:12px; color:var(--muted); margin:2px 2px 16px;}
+
+  .topic{background:var(--card); border:1px solid var(--line); border-radius:13px; margin-bottom:12px; overflow:hidden; transition:border-color .15s, box-shadow .15s;}
+  .topic.pinned{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset;}
+  .thead{display:flex; align-items:flex-start; gap:12px; padding:15px 17px; cursor:pointer;}
+  .thead:hover{background:#fbfdfc;}
+  .tmain{flex:1 1 auto; min-width:0;}
+  .trow1{display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
+  .ttitle{font-weight:700; font-size:16px; margin:0;}
+  .cat{font-size:11px; font-weight:700; color:var(--slate); background:var(--slate-soft); border-radius:5px; padding:2px 7px;}
+  .status{font-size:11px; font-weight:700; border-radius:5px; padding:2px 8px; text-transform:uppercase; letter-spacing:.03em;}
+  .s-teal{background:var(--teal-soft); color:var(--teal);}
+  .s-amber{background:var(--amber-soft); color:var(--amber);}
+  .s-slate{background:var(--slate-soft); color:var(--slate);}
+  .tsummary{color:var(--muted); font-size:13.5px; margin:6px 0 0;}
+  .tmeta{font-size:12px; color:var(--muted); margin-top:7px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+  .tmeta .count{font-weight:600; color:var(--slate);}
+  .pinbtn{flex:0 0 auto; border:1px solid var(--line); background:#fff; border-radius:8px; cursor:pointer; font-size:14px; color:var(--muted); padding:6px 9px; display:inline-flex; align-items:center; gap:5px;}
+  .pinbtn:hover{border-color:var(--gold); color:var(--ink);}
+  .topic.pinned .pinbtn{background:var(--gold-soft); border-color:var(--gold); color:var(--amber);}
+  .chev{flex:0 0 auto; color:var(--muted); font-size:13px; margin-top:3px; transition:transform .15s;}
+  .topic.open .chev{transform:rotate(90deg);}
+
+  .tbody{display:none; padding:0 17px 6px; border-top:1px solid var(--line);}
+  .topic.open .tbody{display:block;}
+  .tl{position:relative; margin:14px 0 6px; padding-left:20px;}
+  .tl:before{content:""; position:absolute; left:5px; top:4px; bottom:4px; width:2px; background:var(--line);}
+  .ev{position:relative; padding:0 0 16px;}
+  .ev:before{content:""; position:absolute; left:-18px; top:4px; width:10px; height:10px; border-radius:50%; background:#fff; border:2px solid var(--teal);}
+  .ev.future:before{border-color:var(--muted); background:var(--bg);}
+  .evdate{font-size:12px; font-weight:700; color:var(--teal); text-transform:uppercase; letter-spacing:.04em;}
+  .ev.future .evdate{color:var(--muted);}
+  .evhead{font-weight:650; font-size:14.5px; margin:1px 0 2px;}
+  .evmeeting{font-size:12px; color:var(--muted); font-weight:600;}
+  .evdetail{font-size:13.5px; color:#2c3a35; margin:5px 0 0;}
+  .remarks{margin:9px 0 0; border-left:2px solid var(--teal-soft); padding-left:11px;}
+  .remark{font-size:13px; margin:0 0 7px;}
+  .remark .who{font-weight:700; color:var(--teal);}
+  .remark .role{font-size:11px; color:var(--muted); font-weight:600;}
+  .remark .text{color:#2c3a35;}
+  .evlinks{margin-top:7px; display:flex; gap:13px; flex-wrap:wrap;}
+  a{color:var(--teal); text-decoration:none; border-bottom:1px solid rgba(15,110,92,.3); font-size:13px; font-weight:600;}
+  a:hover{border-bottom-color:var(--teal);}
+
+  .emptynote{font-size:13px; color:var(--muted); padding:16px; text-align:center; background:#fff; border:1px dashed var(--line); border-radius:12px;}
+
+  /* Week view */
+  .weekcard{background:var(--card); border:1px solid var(--line); border-radius:13px; padding:17px; margin-bottom:14px;}
+  .weeklabel{font-weight:700; font-size:17px; margin:0 0 3px;}
+  .weekcompiled{font-size:12px; color:var(--muted);}
+  .weekintro{font-size:14px; color:#2c3a35; margin:11px 0 14px;}
+  .hl{display:flex; gap:10px; padding:10px 0; border-top:1px solid var(--line); cursor:pointer;}
+  .hl:hover{background:#fbfdfc;}
+  .hl .arrow{color:var(--teal); font-weight:700;}
+  .hl .txt{font-size:13.5px;}
+  .hl .txt small{display:block; color:var(--muted); font-size:11.5px; margin-top:1px;}
+
+  footer.foot{margin-top:30px; padding-top:16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--muted);}
+  .pill-legend{display:inline-block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">City of Belle Isle, FL &middot; Government Tracker</div>
+    <h1>Belle Isle Government Tracker</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" id="tabTopics">Topics</button>
+    <button class="tab" id="tabWeek">This week</button>
+  </div>
+
+  <!-- TOPICS VIEW -->
+  <div id="viewTopics">
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="Search topics (budget, ordinance, Flock, stormwater…)">
+      <select id="catFilter"><option value="">All categories</option></select>
+    </div>
+    <p class="hint">Tap a topic to open its full history and what commissioners said. Tap the ☆ to pin a topic to the top.</p>
+    <div id="topicList"></div>
+  </div>
+
+  <!-- WEEK VIEW -->
+  <div id="viewWeek" style="display:none;">
+    <div id="weekWrap"></div>
+  </div>
+
+  <footer class="foot">
+    <span id="footdate"></span> Commissioner remarks are summarized or quoted from official City of Belle Isle meeting minutes &mdash; open the linked source for exact wording and context. "→" links open the source PDF at the relevant page in Chrome/Edge. Ordinances require two readings; only items marked "Adopted" are law. Questions: City Clerk, cityclerk@belleislefl.gov, 407-851-7730.
+  </footer>
+
+</div>
+
+<script id="archive-data" type="application/json">{
+  "meta": {
+    "title": "Belle Isle Local Government — Topic Archive",
+    "jurisdiction": "City of Belle Isle, FL",
+    "schemaVersion": 2,
+    "lastUpdated": "2026-07-16",
+    "note": "Topic-centric historical record. Each topic is a thread with a chronological timeline of meeting events and recorded commissioner remarks. The Monday refresh appends new timeline entries to existing topics (matching by id) and creates new topics as they arise; it also appends a weekly-summary entry to 'weeks'. Prior entries are never edited. Commissioner remarks are summarized/quoted from official meeting minutes; verify against the linked source before relying on exact wording."
+  },
+  "topics": [
+    {
+      "id": "fy27-budget-millage",
+      "title": "FY2026-27 Budget & Millage",
+      "category": "Budget",
+      "status": "In progress",
+      "statusClass": "s-amber",
+      "pinned": false,
+      "updated": "2026-07-21",
+      "summary": "The annual budget and property-tax rate. Started the spring with no millage set and a compensation study driving costs up; by July a draft proposed raising the rate from 4.7845 to 5.0000 mills, set for a maximum-rate vote July 21 and final hearings in September.",
+      "timeline": [
+        {
+          "date": "2026-03-09",
+          "dateLabel": "Mar 9, 2026",
+          "meeting": "Budget Committee",
+          "event": "FY27 process kicks off — cost pressure, no millage yet",
+          "detail": "First draft budgets expected in June. The approved compensation study is the dominant cost pressure; no millage rate discussed yet. Pending reimbursements noted: Sol Avenue stormwater (~$196K anticipated), Hurricane Ian FEMA (pending, no timeline), Hurricane Irma closeout (~$140K).",
+          "remarks": [
+            { "who": "City Manager Rudometkin", "role": "City Manager", "text": "There will be no cost savings; implementation will increase costs — initial estimates exceeded $300,000, with the largest impact in the Police Department." },
+            { "who": "Vice Chair Evertsen", "role": "Budget Committee", "text": "Requested a historical comparison of prior interim pay adjustments to evaluate gaps between past adjustments, current recommendations, and job descriptions." }
+          ],
+          "links": [ { "label": "Mar 9 minutes →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Minutes-e0de53098cbf49e680185ae5289de65b.pdf" } ]
+        },
+        {
+          "date": "2026-05-11",
+          "dateLabel": "May 11, 2026",
+          "meeting": "Budget Committee",
+          "event": "Planning FY27 budget meetings",
+          "detail": "Annual financial report, planning for FY26-27 budget meetings, a revenue update (reimbursements and fees), and a property-tax reform update. No proposed millage or spending figures finalized yet.",
+          "remarks": [],
+          "links": [ { "label": "May 11 packet →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-2e289cf0534a42d8983ebfb43ff842a7.pdf" } ]
+        },
+        {
+          "date": "2026-07-13",
+          "dateLabel": "Jul 13, 2026",
+          "meeting": "Budget Committee",
+          "event": "Draft budget with proposed millage increase",
+          "detail": "Draft proposes millage of 5.0000 mills (up from 4.7845) — an ~8% increase in ad valorem revenue to ~$5.76M; General Fund $10.88M (+2%); ending fund balance $2.55M (23.4%, near the 25% target). Police +6% ($69,400 equipment, $57K capital); Public Works -27% (vehicle leasing vs. ownership); solid waste +7% (landfill +26%); $250K to Jade Pump Station; 4% COLA; medical insurance +8%. Five-year capital plan totals $11.03M.",
+          "remarks": [],
+          "links": [ { "label": "Jul 13 packet →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-4a303a1798024691825a560fc40c1097.pdf#page=2" } ]
+        },
+        {
+          "date": "2026-07-21",
+          "dateLabel": "Jul 21, 2026",
+          "meeting": "City Council (Budget Workshop + Regular)",
+          "event": "Council sets the maximum millage",
+          "detail": "Council takes up the proposed maximum millage for FY26/27 — the ceiling printed on TRIM notices. The final rate can be lowered at the September hearings but not raised. Agenda also includes discussion of statutory limitations on property-tax ballot questions.",
+          "remarks": [],
+          "links": [ { "label": "Jul 21 agenda →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Agenda-bbe2b928258446cf8db312222e9c76e7.pdf#page=1" } ]
+        },
+        {
+          "date": "2026-09-01",
+          "dateLabel": "September 2026",
+          "meeting": "City Council (TRIM hearings)",
+          "event": "Final millage & budget adoption (upcoming)",
+          "detail": "Two statutory public hearings in September set the final millage and adopt the budget. Watch this thread for the adopted rate and any changes from the 5.0000 ceiling.",
+          "remarks": [],
+          "links": []
+        }
+      ]
+    },
+    {
+      "id": "ord-26-03-lot-splits",
+      "title": "Ord. 26-03 — Subdivisions, Lot Splits & Flag Lots",
+      "category": "Land Use / Zoning",
+      "status": "Pending 2nd reading",
+      "statusClass": "s-amber",
+      "pinned": false,
+      "updated": "2026-07-07",
+      "summary": "Amends Ch. 50 & 54 to define flag-shaped lots, restrict lot splits involving non-conforming uses, and require deed restrictions when flag-shaped lots are created.",
+      "timeline": [
+        {
+          "date": "2026-07-07",
+          "dateLabel": "Jul 7, 2026",
+          "meeting": "City Council",
+          "event": "First reading — continued to Aug 4",
+          "detail": "Introduced for first reading and continued to the August 4 meeting. Not yet law (Belle Isle ordinances require two readings).",
+          "remarks": [],
+          "links": [ { "label": "Jul 7 packet →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-bd311dfeaf65464e9d2686eea4dd422c.pdf" }, { "label": "Current code →", "url": "https://library.municode.com/fl/belle_isle/codes/code_of_ordinances#:~:text=Zoning" } ]
+        },
+        {
+          "date": "2026-08-04",
+          "dateLabel": "Aug 4, 2026",
+          "meeting": "City Council",
+          "event": "Returns for consideration (upcoming)",
+          "detail": "Scheduled to return August 4 for continued consideration / possible second reading.",
+          "remarks": [],
+          "links": []
+        }
+      ]
+    },
+    {
+      "id": "ord-26-05-fire-assessment",
+      "title": "Ord. 26-05 — Fire Rescue Assessment",
+      "category": "Public Safety",
+      "status": "First reading",
+      "statusClass": "s-amber",
+      "pinned": false,
+      "updated": "2026-07-21",
+      "summary": "Would establish the authority and procedures for a special assessment to fund fire-rescue service.",
+      "timeline": [
+        {
+          "date": "2026-07-21",
+          "dateLabel": "Jul 21, 2026",
+          "meeting": "City Council",
+          "event": "First reading",
+          "detail": "Introduced for first reading. Establishes special-assessment authority and procedures for fire-rescue funding. Not yet law.",
+          "remarks": [],
+          "links": [ { "label": "Jul 21 agenda →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Agenda-bbe2b928258446cf8db312222e9c76e7.pdf#page=2" } ]
+        }
+      ]
+    },
+    {
+      "id": "res-26-06-purchasing",
+      "title": "Res. 26-06 — Updated Purchasing Policy",
+      "category": "Governance",
+      "status": "On agenda",
+      "statusClass": "s-amber",
+      "pinned": false,
+      "updated": "2026-07-21",
+      "summary": "Updates the city purchasing policy and repeals prior resolutions 20-08 and 25-02.",
+      "timeline": [
+        {
+          "date": "2026-07-21",
+          "dateLabel": "Jul 21, 2026",
+          "meeting": "City Council",
+          "event": "On the agenda",
+          "detail": "Resolution to adopt an updated purchasing policy, repealing Res. 20-08 and 25-02. Resolutions pass in a single vote.",
+          "remarks": [],
+          "links": [ { "label": "Jul 21 agenda →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Agenda-bbe2b928258446cf8db312222e9c76e7.pdf#page=2" } ]
+        }
+      ]
+    },
+    {
+      "id": "ord-26-02-water-supply",
+      "title": "Ord. 26-02 — Water Supply Facilities Work Plan",
+      "category": "Infrastructure",
+      "status": "Adopted",
+      "statusClass": "s-teal",
+      "pinned": false,
+      "updated": "2026-06-16",
+      "summary": "State-required update to the city's 10-year water supply plan. Reviewed by the Planning & Zoning Board, adopted by Council on final reading June 16 (6-0); requires state review before final effect.",
+      "timeline": [
+        {
+          "date": "2026-06-16",
+          "dateLabel": "Jun 16, 2026",
+          "meeting": "City Council",
+          "event": "Adopted on final reading, 6-0",
+          "detail": "Advanced to second reading and adopted. Motion by Comm. Shuck, seconded by Comm. Oller; unanimous 6-0.",
+          "remarks": [
+            { "who": "City Manager Rudometkin", "role": "City Manager", "text": "This is the same water supply plan amendment previously reviewed by the Planning & Zoning Board; it requires state review before final adoption." }
+          ],
+          "links": [ { "label": "Jul 7 packet (Jun 16 minutes) →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-bd311dfeaf65464e9d2686eea4dd422c.pdf#page=3" } ]
+        }
+      ]
+    },
+    {
+      "id": "flock-cameras",
+      "title": "Flock Safety Camera Expansion",
+      "category": "Public Safety",
+      "status": "Approved (90-day eval)",
+      "statusClass": "s-teal",
+      "pinned": false,
+      "updated": "2026-06-16",
+      "summary": "13 Condor pan-tilt-zoom cameras at $52,000/year, approved June 16 (6-0) with a 90-day evaluation period. Commissioners raised privacy questions about cameras in parks and continuous recording.",
+      "timeline": [
+        {
+          "date": "2026-06-16",
+          "dateLabel": "Jun 16, 2026",
+          "meeting": "City Council",
+          "event": "Approved 6-0, with a 90-day evaluation",
+          "detail": "Flock Safety agreement for 13 Condor PTZ cameras at $52,000 annually. Motion by Comm. Lowell, seconded by Comm. Lance; unanimous 6-0. Includes a 90-day evaluation period.",
+          "remarks": [
+            { "who": "Comm. Gold", "role": "Commissioner", "text": "Raised concern about cameras in parks — 'one resident said they are not a fan of their kid being on camera at all times' — and requested a public meeting where residents could see demonstrations and ask questions." },
+            { "who": "Comm. Bobrowski", "role": "Commissioner", "text": "Asked whether the cameras record continuously." },
+            { "who": "Chief Grimm", "role": "Police Chief", "text": "Yes, they are always recording. We do not have a dedicated staff reviewing the live footage." }
+          ],
+          "links": [ { "label": "Jun 16 minutes →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-bd311dfeaf65464e9d2686eea4dd422c.pdf#page=3" }, { "label": "Flock transparency portal →", "url": "https://transparency.flocksafety.com/belle-isle-fl-pd" } ]
+        }
+      ]
+    },
+    {
+      "id": "sro-cornerstone",
+      "title": "School Resource Officers — Cornerstone Charter",
+      "category": "Public Safety",
+      "status": "Approved",
+      "statusClass": "s-teal",
+      "pinned": false,
+      "updated": "2026-06-16",
+      "summary": "FY26/27 agreement placing two school resource officers at Cornerstone Charter Academy; the school reimburses roughly 75%. Approved June 16 (6-0).",
+      "timeline": [
+        {
+          "date": "2026-06-16",
+          "dateLabel": "Jun 16, 2026",
+          "meeting": "City Council",
+          "event": "Approved 6-0",
+          "detail": "SRO agreement with Cornerstone Charter Academy for 2026-2027; mayor authorized to execute. Motion by Comm. Lowell, seconded by Comm. Lance; unanimous 6-0.",
+          "remarks": [
+            { "who": "Chief Grimm", "role": "Police Chief", "text": "Salary and benefits rose from ~$70,000 to ~$76,000. Total annual cost for two SRO positions is ~$250,000, with the school reimbursing ~$187,000 (about 75%)." }
+          ],
+          "links": [ { "label": "Jun 16 minutes →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-bd311dfeaf65464e9d2686eea4dd422c.pdf#page=3" } ]
+        }
+      ]
+    },
+    {
+      "id": "it-services-eola",
+      "title": "IT Services Contract — EOLA Technology",
+      "category": "Governance",
+      "status": "Awarded",
+      "statusClass": "s-teal",
+      "pinned": false,
+      "updated": "2026-06-16",
+      "summary": "RFP 2026-04 awarded to EOLA Technology, a three-year agreement with two possible one-year renewals. Council emphasized holding the vendor accountable to contract terms.",
+      "timeline": [
+        {
+          "date": "2026-06-16",
+          "dateLabel": "Jun 16, 2026",
+          "meeting": "City Council",
+          "event": "Awarded 6-0",
+          "detail": "RFP 2026-04 awarded to EOLA Technology; city manager and attorney authorized to negotiate a three-year agreement with two possible one-year renewals. Motion by Comm. Lance, seconded by Comm. Oller; unanimous 6-0.",
+          "remarks": [
+            { "who": "City Clerk", "role": "City Clerk", "text": "Recommended requiring the vendor to resolve issues under contract rather than staff resolving problems internally." },
+            { "who": "Public Works Director Price", "role": "Public Works Director", "text": "Response time had been a concern in the past, but service and responsiveness have improved significantly over the last six to eight months." },
+            { "who": "Mayor Carson", "role": "Mayor", "text": "The City must hold the provider accountable to the terms of the contract." }
+          ],
+          "links": [ { "label": "Jun 16 minutes →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-bd311dfeaf65464e9d2686eea4dd422c.pdf#page=3" } ]
+        }
+      ]
+    },
+    {
+      "id": "annexation-study",
+      "title": "Citywide Annexation Study",
+      "category": "Land Use / Zoning",
+      "status": "Exploratory",
+      "statusClass": "s-slate",
+      "pinned": false,
+      "updated": "2026-07-07",
+      "summary": "Staff is recommending an RFP for an Annexation Strategy, Feasibility & Fiscal Impact Study evaluating contiguous unincorporated areas. Early-stage, no vote yet.",
+      "timeline": [
+        {
+          "date": "2026-07-07",
+          "dateLabel": "Jul 7, 2026",
+          "meeting": "City Council",
+          "event": "Staff recommends an RFP",
+          "detail": "City Manager's cover memo recommends preparing an RFP for a Citywide Annexation Strategy, Feasibility & Fiscal Impact Study of contiguous unincorporated areas. Discussion item; no vote.",
+          "remarks": [],
+          "links": [ { "label": "Jul 7 packet →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-bd311dfeaf65464e9d2686eea4dd422c.pdf#page=33" } ]
+        }
+      ]
+    },
+    {
+      "id": "stormwater-jade-pump",
+      "title": "Stormwater — Jade Pump Station & Drainage",
+      "category": "Infrastructure",
+      "status": "Budgeted",
+      "statusClass": "s-slate",
+      "pinned": false,
+      "updated": "2026-07-13",
+      "summary": "Stormwater capital work, including $250K for Jade Pump Station rehabilitation in the FY27 draft budget and a pending ~$196K reimbursement on the Sol Avenue project.",
+      "timeline": [
+        {
+          "date": "2026-03-09",
+          "dateLabel": "Mar 9, 2026",
+          "meeting": "Budget Committee",
+          "event": "Sol Avenue reimbursement pending",
+          "detail": "Committee noted an anticipated ~$196,000 reimbursement tied to the Sol Avenue stormwater project among pending revenues.",
+          "remarks": [],
+          "links": [ { "label": "Mar 9 minutes →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Minutes-e0de53098cbf49e680185ae5289de65b.pdf" } ]
+        },
+        {
+          "date": "2026-07-13",
+          "dateLabel": "Jul 13, 2026",
+          "meeting": "Budget Committee",
+          "event": "$250K for Jade Pump Station in draft budget",
+          "detail": "The FY27 draft dedicates $250,000 from the Stormwater Fund to rehabilitate the Jade Pump Station, part of an $11.03M five-year capital plan that also includes swale and drainage work.",
+          "remarks": [],
+          "links": [ { "label": "Jul 13 packet →", "url": "https://mccmeetings.blob.core.usgovcloudapi.net/bifl-pubu/MEET-Packet-4a303a1798024691825a560fc40c1097.pdf#page=17" } ]
+        }
+      ]
+    }
+  ],
+  "weeks": [
+    {
+      "weekOf": "2026-07-13",
+      "label": "Week of July 13–19, 2026",
+      "compiled": "2026-07-16",
+      "intro": "A budget-heavy stretch: the Budget Committee wrapped its review of a proposed millage increase, and next Tuesday's council meeting sets the maximum tax rate for the year and takes up a new fire-rescue assessment.",
+      "highlights": [
+        { "topicId": "fy27-budget-millage", "line": "Draft budget proposes raising millage to 5.0000 (from 4.7845); Council sets the maximum rate July 21." },
+        { "topicId": "ord-26-05-fire-assessment", "line": "New Fire Rescue Assessment ordinance (26-05) gets its first reading July 21." },
+        { "topicId": "ord-26-03-lot-splits", "line": "Lot-split / flag-lot ordinance (26-03) continued to Aug 4 after its July 7 first reading." },
+        { "topicId": "res-26-06-purchasing", "line": "Updated purchasing policy (Res. 26-06) on the July 21 agenda." }
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+(function(){
+  var DATA = JSON.parse(document.getElementById('archive-data').textContent);
+  var topics = DATA.topics.slice();
+  var weeks = (DATA.weeks || []).slice().sort(function(a,b){ return a.weekOf < b.weekOf ? 1 : -1; });
+  var pins = {}; // in-memory pin state, keyed by topic id
+  var open = {}; // open/expanded topics
+  var TODAY = "2026-07-16";
+
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ s = String(s==null?'':s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  // allow our own <br> in labels but escape everything else: we control data, so render detail as text
+  function txt(s){ return esc(s); }
+
+  $('sub').textContent = topics.length + ' tracked topics · ' + (DATA.meta ? DATA.meta.jurisdiction : '');
+  $('footdate').textContent = 'As of ' + (DATA.meta ? DATA.meta.lastUpdated : TODAY) + '. ';
+
+  // category filter options
+  var cats = [];
+  topics.forEach(function(t){ if(cats.indexOf(t.category)===-1) cats.push(t.category); });
+  cats.sort().forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; $('catFilter').appendChild(o); });
+
+  function isPinned(t){ return pins[t.id] != null ? pins[t.id] : !!t.pinned; }
+
+  function sortTopics(list){
+    return list.slice().sort(function(a,b){
+      var pa = isPinned(a) ? 1 : 0, pb = isPinned(b) ? 1 : 0;
+      if(pa !== pb) return pb - pa;                 // pinned first
+      return (a.updated < b.updated) ? 1 : (a.updated > b.updated ? -1 : 0); // newest updated
+    });
+  }
+
+  function remarksHtml(remarks){
+    if(!remarks || !remarks.length) return '';
+    return '<div class="remarks">' + remarks.map(function(r){
+      return '<p class="remark"><span class="who">' + txt(r.who) + '</span> '
+        + (r.role ? '<span class="role">(' + txt(r.role) + ')</span> ' : '')
+        + '<span class="text">— ' + txt(r.text) + '</span></p>';
+    }).join('') + '</div>';
+  }
+  function linksHtml(links){
+    if(!links || !links.length) return '';
+    return '<div class="evlinks">' + links.map(function(l){
+      return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + txt(l.label) + '</a>';
+    }).join('') + '</div>';
+  }
+  function timelineHtml(t){
+    var evs = t.timeline.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; }); // newest first
+    return '<div class="tl">' + evs.map(function(e){
+      var future = e.date > TODAY ? ' future' : '';
+      return '<div class="ev' + future + '">'
+        + '<div class="evdate">' + txt(e.dateLabel) + (future ? ' · upcoming' : '') + '</div>'
+        + '<div class="evhead">' + txt(e.event) + '</div>'
+        + '<div class="evmeeting">' + txt(e.meeting) + '</div>'
+        + (e.detail ? '<p class="evdetail">' + txt(e.detail) + '</p>' : '')
+        + remarksHtml(e.remarks)
+        + linksHtml(e.links)
+        + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function topicCard(t){
+    var pinned = isPinned(t);
+    var isOpen = !!open[t.id];
+    var n = t.timeline ? t.timeline.length : 0;
+    return '<div class="topic' + (pinned?' pinned':'') + (isOpen?' open':'') + '" data-id="' + esc(t.id) + '">'
+      + '<div class="thead" data-role="head">'
+        + '<button class="pinbtn" data-role="pin" title="Pin to top">' + (pinned ? '★' : '☆') + '</button>'
+        + '<div class="tmain">'
+          + '<div class="trow1"><p class="ttitle">' + txt(t.title) + '</p>'
+            + '<span class="status ' + esc(t.statusClass) + '">' + txt(t.status) + '</span>'
+            + '<span class="cat">' + txt(t.category) + '</span></div>'
+          + '<p class="tsummary">' + txt(t.summary) + '</p>'
+          + '<div class="tmeta"><span class="count">' + n + ' update' + (n===1?'':'s') + '</span>'
+            + '<span>last activity ' + txt(t.updated) + '</span></div>'
+        + '</div>'
+        + '<span class="chev">▶</span>'
+      + '</div>'
+      + '<div class="tbody">' + (isOpen ? timelineHtml(t) : '') + '</div>'
+    + '</div>';
+  }
+
+  function renderTopics(){
+    var q = ($('search').value || '').toLowerCase().trim();
+    var cat = $('catFilter').value;
+    var list = topics.filter(function(t){
+      if(cat && t.category !== cat) return false;
+      if(!q) return true;
+      var hay = (t.title + ' ' + t.summary + ' ' + t.category + ' ' + JSON.stringify(t.timeline)).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+    list = sortTopics(list);
+    var host = $('topicList');
+    if(!list.length){ host.innerHTML = '<div class="emptynote">No topics match your search.</div>'; return; }
+    host.innerHTML = list.map(topicCard).join('');
+    // wire events
+    host.querySelectorAll('.topic').forEach(function(el){
+      var id = el.getAttribute('data-id');
+      el.querySelector('[data-role="pin"]').addEventListener('click', function(ev){
+        ev.stopPropagation();
+        pins[id] = !isPinnedById(id);
+        renderTopics();
+      });
+      el.querySelector('[data-role="head"]').addEventListener('click', function(){
+        open[id] = !open[id];
+        renderTopics();
+      });
+    });
+  }
+  function isPinnedById(id){ var t = topics.filter(function(x){return x.id===id;})[0]; return t ? isPinned(t) : false; }
+
+  // Week view
+  function renderWeek(){
+    var host = $('weekWrap');
+    if(!weeks.length){ host.innerHTML = '<div class="emptynote">No weekly summaries yet.</div>'; return; }
+    host.innerHTML = weeks.map(function(w){
+      var hls = (w.highlights||[]).map(function(h){
+        var t = topics.filter(function(x){return x.id===h.topicId;})[0];
+        var sub = t ? (t.title + ' · ' + t.status) : '';
+        return '<div class="hl" data-topic="' + esc(h.topicId) + '"><span class="arrow">→</span><div class="txt">' + txt(h.line) + (sub ? '<small>' + txt(sub) + '</small>' : '') + '</div></div>';
+      }).join('');
+      return '<div class="weekcard"><p class="weeklabel">' + txt(w.label) + '</p>'
+        + '<span class="weekcompiled">compiled ' + txt(w.compiled) + '</span>'
+        + '<p class="weekintro">' + txt(w.intro) + '</p>' + hls + '</div>';
+    }).join('');
+    host.querySelectorAll('.hl').forEach(function(el){
+      el.addEventListener('click', function(){
+        var id = el.getAttribute('data-topic');
+        open[id] = true;
+        showTab('topics');
+        $('search').value=''; $('catFilter').value='';
+        renderTopics();
+        var card = document.querySelector('.topic[data-id="' + id + '"]');
+        if(card) card.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  }
+
+  function showTab(which){
+    var t1 = which==='topics';
+    $('viewTopics').style.display = t1 ? 'block':'none';
+    $('viewWeek').style.display = t1 ? 'none':'block';
+    $('tabTopics').classList.toggle('active', t1);
+    $('tabWeek').classList.toggle('active', !t1);
+  }
+  $('tabTopics').addEventListener('click', function(){ showTab('topics'); });
+  $('tabWeek').addEventListener('click', function(){ showTab('week'); });
+  $('search').addEventListener('input', renderTopics);
+  $('catFilter').addEventListener('change', renderTopics);
+
+  renderTopics();
+  renderWeek();
+})();
+</script>
+</body>
+</html>
