@@ -36,4 +36,8 @@ const html = tpl.replace('__ARCHIVE_JSON__', () => safeJson);
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_PATH, html);
 
+// Custom domain for GitHub Pages. Written into the published artifact so the
+// domain persists across every Actions deploy.
+writeFileSync(`${OUT_DIR}/CNAME`, 'govagenda.org\n');
+
 console.log(`Built ${OUT_PATH} — ${html.length} bytes, ${topicCount} topics.`);
